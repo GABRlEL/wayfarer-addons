@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Wayfarer Image Timestamps",
+  "version": "1.0.0",
+  "description": "Keeps Edge's built-in Save image as action and timestamps images saved from Niantic Wayfarer.",
+  "homepage_url": "https://github.com/GABRlEL/wayfarer-addons",
+  "permissions": [
+    "downloads"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://wayfarer.nianticlabs.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}
