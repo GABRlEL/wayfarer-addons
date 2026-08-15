@@ -1,0 +1,32 @@
+[
+  {
+    "name": "AI Gen Main - OpenAI",
+    "category": "Fake Nominations or criteria issues",
+    "details": "This nominations main photo has been AI-generated with OpenAI Tools. This can be verified through OpenAIs verify tool: https://openai.com/research/verify/"
+  },
+  {
+    "name": "AI Gen Multiple - OpenAI",
+    "category": "Fake Nominations or criteria issues",
+    "details": "Multiple photos from this submission have been AI-generated with OpenAI Tools. This can be verified through OpenAIs verify tool: https://openai.com/research/verify/"
+  },
+  {
+    "name": "AI Gen Main - Google",
+    "category": "Fake Nominations or criteria issues",
+    "details": "This nominations main photo has been AI-generated with Gemini. This can be verified using Googles verification tool as explained in these instructions: https://support.google.com/gemini/answer/16722517?hl=en&co=GENIE.Platform%3DDesktop&oco=0"
+  },
+  {
+    "name": "AI Gen Multiple - Google",
+    "category": "Fake Nominations or criteria issues",
+    "details": "Multiple photos from this submission have been AI-generated with Gemini. This can be verified using Googles verification tool as explained in these instructions: https://support.google.com/gemini/answer/16722517?hl=en&co=GENIE.Platform%3DDesktop&oco=0"
+  },
+  {
+    "name": "Third Party Photo - Street View",
+    "category": "Photo Issues",
+    "details": "This submission uses third party pictures. They were taken from Google Street View."
+  },
+  {
+    "name": "Third Party Photo - Generic",
+    "category": "Photo Issues",
+    "details": "This submission uses third party pictures. They were taken from this source: "
+  }
+]
