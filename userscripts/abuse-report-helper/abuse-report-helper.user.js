@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Wayfarer Abuse Report Helper
 // @namespace    https://github.com/GABRlEL/wayfarer-addons/
-// @downloadURL  https://raw.githubusercontent.com/GABRlEL/wayfarer-addons/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
-// @updateURL    https://raw.githubusercontent.com/GABRlEL/wayfarer-addons/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
+// @downloadURL  https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
+// @updateURL    https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
 // @homepageURL  https://github.com/GABRlEL/wayfarer-addons/
 // @version      1.0.0
 // @description  Remember contact details, prefill abuse-report preset and QoL for the abuse form.
