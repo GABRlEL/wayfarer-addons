@@ -4,11 +4,11 @@
 // @downloadURL  https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
 // @updateURL    https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
 // @homepageURL  https://github.com/GABRlEL/wayfarer-addons/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Remember contact details, prefill abuse-report preset and QoL for the abuse form.
 // @author       https://solo.to/Gab
 // @match        https://niantic.helpshift.com/hc/*/21-wayfarer/faq/2190-reporting-abuse-in-wayfarer*
-// @run-at       document-idle
+// @run-at       document-start
 // @noframes
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -47,6 +47,11 @@
     // supplied language snapshot, so this remains independent of translations.
     const REQUIRED_REPORT_TEXTAREA_INDEX = 1;
     const REQUIRED_REPORT_FIELD_DISPLAY_NAME = 'Provide details of the location(s)';
+    const EARLY_PRIVACY_STYLE_ID = 'nw-wayfarer-abuse-helper-early-privacy';
+    const ACKNOWLEDGEMENT_EMAIL_ATTRIBUTE = 'data-nw-ack-email';
+    const ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE = 'data-nw-ack-email-revealed';
+    const ACKNOWLEDGEMENT_EMAIL_BOUND_ATTRIBUTE = 'data-nw-ack-email-bound';
+    const ACKNOWLEDGEMENT_EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
     const HELPER_ID = 'nw-wayfarer-abuse-helper';
     const STYLE_ID = 'nw-wayfarer-abuse-helper-style';
     const ARTICLE_BUTTON_ID = 'nw-wayfarer-article-report-button';
@@ -1397,6 +1402,7 @@
         const previous = state.settings[setting];
         state.settings[setting] = Boolean(enabled);
         applyPrivacySettings(state.formRoot);
+        applyAcknowledgementPrivacy(state.formRoot);
         configureRequiredReportField(state.formRoot);
 
         try {
@@ -1404,6 +1410,7 @@
         } catch (error) {
             state.settings[setting] = previous;
             applyPrivacySettings(state.formRoot);
+            applyAcknowledgementPrivacy(state.formRoot);
             configureRequiredReportField(state.formRoot);
             setMessage('Could not save the setting.', 'error');
         }
@@ -1551,6 +1558,161 @@
         }
 
         return { stage: 'waiting', host, root };
+    }
+
+    function installEarlyPrivacyGuard() {
+        if (document.getElementById(EARLY_PRIVACY_STYLE_ID)) {
+            return;
+        }
+
+        const style = document.createElement('style');
+        style.id = EARLY_PRIVACY_STYLE_ID;
+        style.textContent = 'smart-form.js-smart-form { visibility: hidden !important; }';
+        const parent = document.head || document.documentElement;
+        if (parent) {
+            parent.append(style);
+        }
+    }
+
+    function releaseEarlyPrivacyGuard() {
+        const style = document.getElementById(EARLY_PRIVACY_STYLE_ID);
+        if (style) {
+            style.remove();
+        }
+    }
+
+    function findAcknowledgementMessage(root) {
+        return root && root.querySelector('.smart-form__ack-page-message');
+    }
+
+    function wrapAcknowledgementEmail(message) {
+        if (!message) {
+            return null;
+        }
+
+        const existing = message.querySelector(`[${ACKNOWLEDGEMENT_EMAIL_ATTRIBUTE}]`);
+        if (existing) {
+            return existing;
+        }
+
+        const documentForMessage = message.ownerDocument;
+        const walker = documentForMessage.createTreeWalker(message, 4);
+        let node = walker.nextNode();
+        while (node) {
+            const match = ACKNOWLEDGEMENT_EMAIL_PATTERN.exec(node.nodeValue || '');
+            if (match && node.parentElement
+                && !node.parentElement.closest(`[${ACKNOWLEDGEMENT_EMAIL_ATTRIBUTE}]`)) {
+                const value = node.nodeValue || '';
+                const start = match.index;
+                const end = start + match[0].length;
+                const fragment = documentForMessage.createDocumentFragment();
+
+                if (start > 0) {
+                    fragment.append(documentForMessage.createTextNode(value.slice(0, start)));
+                }
+
+                const email = documentForMessage.createElement('span');
+                email.setAttribute(ACKNOWLEDGEMENT_EMAIL_ATTRIBUTE, 'true');
+                email.setAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE, 'false');
+                email.textContent = match[0];
+                fragment.append(email);
+
+                if (end < value.length) {
+                    fragment.append(documentForMessage.createTextNode(value.slice(end)));
+                }
+
+                node.parentNode.replaceChild(fragment, node);
+                return email;
+            }
+            node = walker.nextNode();
+        }
+
+        return null;
+    }
+
+    function removeAcknowledgementEmailBlur(message) {
+        if (!message) {
+            return;
+        }
+
+        Array.from(message.querySelectorAll(`[${ACKNOWLEDGEMENT_EMAIL_ATTRIBUTE}]`))
+            .forEach((email) => {
+                email.replaceWith(message.ownerDocument.createTextNode(email.textContent || ''));
+            });
+    }
+
+    function applyAcknowledgementEmailBlur(email) {
+        if (!email) {
+            return;
+        }
+
+        if (!email.hasAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE)) {
+            email.setAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE, 'false');
+        }
+
+        // The confirmation email is intentionally reveal-on-click only:
+        // focusing or hovering it must not expose the address.
+        if (!email.hasAttribute('tabindex')) {
+            email.setAttribute('tabindex', '0');
+        }
+        if (!email.hasAttribute('role')) {
+            email.setAttribute('role', 'button');
+        }
+        if (!email.hasAttribute('aria-label')) {
+            email.setAttribute('aria-label', 'Blurred email address; click to reveal');
+        }
+
+        if (email.getAttribute(ACKNOWLEDGEMENT_EMAIL_BOUND_ATTRIBUTE) !== 'true') {
+            email.addEventListener('click', () => {
+                email.setAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE, 'true');
+                email.setAttribute('aria-label', 'Email address');
+                applyAcknowledgementEmailBlur(email);
+            });
+            email.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') {
+                    return;
+                }
+                event.preventDefault();
+                email.click();
+            });
+            email.addEventListener('blur', () => {
+                email.setAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE, 'false');
+                email.setAttribute('aria-label', 'Blurred email address; click to reveal');
+                applyAcknowledgementEmailBlur(email);
+            });
+            email.setAttribute(ACKNOWLEDGEMENT_EMAIL_BOUND_ATTRIBUTE, 'true');
+        }
+
+        const revealed = email.getAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE) === 'true';
+        const blur = 'blur(10px)';
+        const filter = revealed ? 'none' : blur;
+        if (email.style.getPropertyValue('filter') !== filter
+            || email.style.getPropertyPriority('filter') !== 'important') {
+            email.style.setProperty('filter', filter, 'important');
+        }
+        if (email.style.getPropertyValue('-webkit-filter') !== filter
+            || email.style.getPropertyPriority('-webkit-filter') !== 'important') {
+            email.style.setProperty('-webkit-filter', filter, 'important');
+        }
+        email.style.setProperty('display', 'inline-block', 'important');
+        email.style.setProperty('white-space', 'nowrap', 'important');
+        email.style.setProperty('transition', 'none', 'important');
+        email.style.setProperty('-webkit-transition', 'none', 'important');
+    }
+
+    function applyAcknowledgementPrivacy(root) {
+        const message = findAcknowledgementMessage(root);
+        if (!message) {
+            return false;
+        }
+
+        if (!state.settings.blurEmail) {
+            removeAcknowledgementEmailBlur(message);
+            return true;
+        }
+
+        applyAcknowledgementEmailBlur(wrapAcknowledgementEmail(message));
+        return true;
     }
 
     function getNativeControl(customElement) {
@@ -2984,6 +3146,7 @@
         const changed = form.stage !== state.stage || form.root !== state.formRoot;
         state.formHost = form.host;
         state.formRoot = form.root;
+        const acknowledgementReady = applyAcknowledgementPrivacy(form.root);
 
         if (form.root !== state.observedFormRoot) {
             if (state.formObserver) {
@@ -2992,7 +3155,12 @@
             }
             state.observedFormRoot = form.root;
             if (form.root) {
-                state.formObserver = new MutationObserver(scheduleEnhance);
+                state.formObserver = new MutationObserver(() => {
+                    // Re-wrap immediately if the hosted acknowledgment view
+                    // re-renders, before the browser gets a paint opportunity.
+                    applyAcknowledgementPrivacy(form.root);
+                    scheduleEnhance();
+                });
                 state.formObserver.observe(form.root, {
                     attributes: true,
                     childList: true,
@@ -3027,9 +3195,22 @@
             }
             applyPrivacySettings(state.formRoot);
         }
+
+        const initialFormReady = state.stage === 'profile'
+            || state.stage === 'report'
+            || acknowledgementReady
+            || !!findReportCtaButton();
+        if (initialFormReady) {
+            releaseEarlyPrivacyGuard();
+        }
     }
 
     function start() {
+        if (!document.body) {
+            document.addEventListener('DOMContentLoaded', start, { once: true });
+            return;
+        }
+
         state.readyPromise = loadStoredState()
             .catch(() => {
                 state.profileLoaded = true;
@@ -3057,9 +3238,11 @@
                 state.formObserver = null;
             }
             clearRequiredReportFieldGuard();
+            releaseEarlyPrivacyGuard();
         }, { once: true });
         scheduleEnhance();
     }
 
+    installEarlyPrivacyGuard();
     start();
 })();
