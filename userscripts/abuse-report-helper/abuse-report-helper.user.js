@@ -4,7 +4,7 @@
 // @downloadURL  https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
 // @updateURL    https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
 // @homepageURL  https://github.com/GABRlEL/wayfarer-addons/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Remember contact details, prefill abuse-report preset and QoL for the abuse form.
 // @author       https://solo.to/Gab
 // @match        https://niantic.helpshift.com/hc/*/21-wayfarer/faq/2190-reporting-abuse-in-wayfarer*
@@ -931,9 +931,9 @@
                     type: 'checkbox',
                     checked: state.settings.blurEmail,
                     dataset: { control: 'blur-email' },
-                    attrs: { role: 'switch', 'aria-label': 'Blur email field' },
+                    attrs: { role: 'switch', 'aria-label': 'Black out email address' },
                 }),
-                makeElement('span', { textContent: 'Blur email field (revealed on focus)' }),
+                makeElement('span', { textContent: 'Black out email address (revealed on focus/click)' }),
             ]),
             makeElement('label', { className: 'nw-helper-switch' }, [
                 makeElement('input', {
@@ -1630,7 +1630,7 @@
         return null;
     }
 
-    function removeAcknowledgementEmailBlur(message) {
+    function removeAcknowledgementEmailMask(message) {
         if (!message) {
             return;
         }
@@ -1641,7 +1641,7 @@
             });
     }
 
-    function applyAcknowledgementEmailBlur(email) {
+    function applyAcknowledgementEmailMask(email) {
         if (!email) {
             return;
         }
@@ -1659,14 +1659,14 @@
             email.setAttribute('role', 'button');
         }
         if (!email.hasAttribute('aria-label')) {
-            email.setAttribute('aria-label', 'Blurred email address; click to reveal');
+            email.setAttribute('aria-label', 'Blacked-out email address; click to reveal');
         }
 
         if (email.getAttribute(ACKNOWLEDGEMENT_EMAIL_BOUND_ATTRIBUTE) !== 'true') {
             email.addEventListener('click', () => {
                 email.setAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE, 'true');
                 email.setAttribute('aria-label', 'Email address');
-                applyAcknowledgementEmailBlur(email);
+                applyAcknowledgementEmailMask(email);
             });
             email.addEventListener('keydown', (event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') {
@@ -1677,22 +1677,30 @@
             });
             email.addEventListener('blur', () => {
                 email.setAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE, 'false');
-                email.setAttribute('aria-label', 'Blurred email address; click to reveal');
-                applyAcknowledgementEmailBlur(email);
+                email.setAttribute('aria-label', 'Blacked-out email address; click to reveal');
+                applyAcknowledgementEmailMask(email);
             });
             email.setAttribute(ACKNOWLEDGEMENT_EMAIL_BOUND_ATTRIBUTE, 'true');
         }
 
         const revealed = email.getAttribute(ACKNOWLEDGEMENT_EMAIL_REVEALED_ATTRIBUTE) === 'true';
-        const blur = 'blur(10px)';
-        const filter = revealed ? 'none' : blur;
-        if (email.style.getPropertyValue('filter') !== filter
-            || email.style.getPropertyPriority('filter') !== 'important') {
-            email.style.setProperty('filter', filter, 'important');
-        }
-        if (email.style.getPropertyValue('-webkit-filter') !== filter
-            || email.style.getPropertyPriority('-webkit-filter') !== 'important') {
-            email.style.setProperty('-webkit-filter', filter, 'important');
+        const filter = 'none';
+        email.style.setProperty('filter', filter, 'important');
+        email.style.setProperty('-webkit-filter', filter, 'important');
+        if (revealed) {
+            email.style.removeProperty('background-color');
+            email.style.removeProperty('color');
+            email.style.removeProperty('-webkit-text-fill-color');
+            email.style.removeProperty('caret-color');
+            email.style.removeProperty('text-shadow');
+        } else {
+            // A solid mask hides the address without the soft edges produced
+            // by a blur filter and remains private before the first paint.
+            email.style.setProperty('background-color', '#000', 'important');
+            email.style.setProperty('color', 'transparent', 'important');
+            email.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
+            email.style.setProperty('caret-color', 'transparent', 'important');
+            email.style.setProperty('text-shadow', 'none', 'important');
         }
         email.style.setProperty('display', 'inline-block', 'important');
         email.style.setProperty('white-space', 'nowrap', 'important');
@@ -1707,11 +1715,11 @@
         }
 
         if (!state.settings.blurEmail) {
-            removeAcknowledgementEmailBlur(message);
+            removeAcknowledgementEmailMask(message);
             return true;
         }
 
-        applyAcknowledgementEmailBlur(wrapAcknowledgementEmail(message));
+        applyAcknowledgementEmailMask(wrapAcknowledgementEmail(message));
         return true;
     }
 
@@ -1875,9 +1883,9 @@
             bindPrivacyControl(entry, setting);
             entry.control.dataset.nwPrivacyAutofill = 'true';
             entry.control.dataset.nwPrivacyRevealed = 'false';
-            updatePrivacyBlur(entry.control);
+            updatePrivacyMask(entry.control);
             try {
-                // The privacy filter is already applied before the value is
+                // The privacy mask is already applied before the value is
                 // written, so the email never paints unblurred during autofill.
                 setCustomControlValue(entry.host, value);
             } finally {
@@ -1889,12 +1897,12 @@
                 }
                 entry.control.dataset.nwPrivacyAutofill = 'false';
                 entry.control.dataset.nwPrivacyRevealed = 'false';
-                updatePrivacyBlur(entry.control);
+                updatePrivacyMask(entry.control);
             }
         });
     }
 
-    function updatePrivacyBlur(control) {
+    function updatePrivacyMask(control) {
         if (!control) {
             return;
         }
@@ -1903,10 +1911,27 @@
         const enabled = setting ? !!state.settings[setting] : false;
         const revealed = control.dataset.nwPrivacyRevealed === 'true';
         const focused = typeof control.matches === 'function' && control.matches(':focus');
-        const shouldBlur = enabled && !revealed && !focused;
-        const filter = shouldBlur ? 'blur(10px)' : 'none';
+        const shouldMask = enabled && !revealed && !focused;
+        const isEmail = setting === 'blurEmail';
+        const shouldBlackout = isEmail && shouldMask;
+        const filter = !isEmail && shouldMask ? 'blur(10px)' : 'none';
         control.style.setProperty('filter', filter, 'important');
         control.style.setProperty('-webkit-filter', filter, 'important');
+        if (shouldBlackout) {
+            // Black out the complete input surface and make the actual value
+            // transparent. This also covers autofilled values before paint.
+            control.style.setProperty('background-color', '#000', 'important');
+            control.style.setProperty('color', 'transparent', 'important');
+            control.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
+            control.style.setProperty('caret-color', 'transparent', 'important');
+            control.style.setProperty('text-shadow', 'none', 'important');
+        } else {
+            control.style.removeProperty('background-color');
+            control.style.removeProperty('color');
+            control.style.removeProperty('-webkit-text-fill-color');
+            control.style.removeProperty('caret-color');
+            control.style.removeProperty('text-shadow');
+        }
         // Do not animate this: the value should be private before it is
         // painted, especially when the helper fills the field automatically.
         control.style.removeProperty('transition');
@@ -1926,22 +1951,22 @@
                     return;
                 }
                 control.dataset.nwPrivacyRevealed = 'true';
-                updatePrivacyBlur(control);
+                updatePrivacyMask(control);
             });
             control.addEventListener('click', () => {
                 if (control.dataset.nwPrivacyAutofill === 'true') {
                     return;
                 }
                 control.dataset.nwPrivacyRevealed = 'true';
-                updatePrivacyBlur(control);
+                updatePrivacyMask(control);
             });
             control.addEventListener('blur', () => {
                 control.dataset.nwPrivacyRevealed = 'false';
-                updatePrivacyBlur(control);
+                updatePrivacyMask(control);
             });
             control.dataset.nwPrivacyBound = 'true';
         }
-        updatePrivacyBlur(control);
+        updatePrivacyMask(control);
     }
 
     function applyPrivacySettings(root) {
