@@ -3,7 +3,7 @@
 (function () {
     function isWayfarerNewRoute() {
         return location.protocol === 'https:'
-            && location.hostname === 'wayfarer.nianticlabs.com'
+            && location.hostname === 'wayfarer.scopely.com'
             && (location.pathname === '/new' || location.pathname.startsWith('/new/'));
     }
 
