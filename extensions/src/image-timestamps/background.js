@@ -19,10 +19,10 @@ function isWayfarerReferrer(value) {
 
     const parsed = new URL(url);
     if (parsed.protocol !== 'https:') return false;
-    if (parsed.hostname.toLowerCase() !== 'wayfarer.nianticlabs.com') return false;
+    if (parsed.hostname.toLowerCase() !== 'wayfarer.scopely.com') return false;
 
     // The root path is included because strict-origin referrer policies can
-    // reduce a cross-origin referrer to just https://wayfarer.nianticlabs.com/.
+    // reduce a cross-origin referrer to just https://wayfarer.scopely.com/.
     return parsed.pathname === '/'
         || parsed.pathname === '/new'
         || parsed.pathname.startsWith('/new/');
