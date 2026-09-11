@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         WFMM Open In
 // @namespace    https://github.com/GABRlEL/wayfarer-addons/
-// @downloadURL  https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/wfmm-plugin-open-in/wfmm-plugin-open-in.user.js
-// @updateURL    https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/wfmm-plugin-open-in/wfmm-plugin-open-in.user.js
+// @downloadURL  https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/wfmm-plugin-open-in/wfmm-open-in.user.js
+// @updateURL    https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/wfmm-plugin-open-in/wfmm-open-in.user.js
 // @homepageURL  https://github.com/GABRlEL/wayfarer-addons/
 // @version      1.0.0
 // @description  WFMM addon to add buttons to open the current submission coordinates on other maps or access helpful sites. Based on the original Open In by tehstone and bilde2910.
