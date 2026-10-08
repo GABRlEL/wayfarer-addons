@@ -73,13 +73,13 @@
             name: 'AI Gen Main - Google',
             category: 'Fake Nominations or criteria issues',
             categoryId: 'co-2',
-            details: 'This nominations main photo has been AI-generated with Gemini. This can be verified using Googles verification tool as explained in these instructions: https://support.google.com/gemini?p=verify_ai',
+            details: 'This nominations main photo has been AI-generated with Gemini. This can be verified using Googles verification tool as explained in these instructions: https://support.google.com/gemini?p=verify_ai or alternatively with Googles official SynthID Detector at https://synthid.com/',
         }),
         Object.freeze({
             name: 'AI Gen Multiple - Google',
             category: 'Fake Nominations or criteria issues',
             categoryId: 'co-2',
-            details: 'Multiple photos from this submission have been AI-generated with Gemini. This can be verified using Googles verification tool as explained in these instructions: https://support.google.com/gemini?p=verify_ai',
+            details: 'Multiple photos from this submission have been AI-generated with Gemini. This can be verified using Googles verification tool as explained in these instructions: https://support.google.com/gemini?p=verify_ai or alternatively with Googles official SynthID Detector at https://synthid.com/',
         }),
         Object.freeze({
             name: 'Third Party Photo - Street View',
