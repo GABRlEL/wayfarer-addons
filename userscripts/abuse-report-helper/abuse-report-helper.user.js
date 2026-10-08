@@ -4,10 +4,10 @@
 // @downloadURL  https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
 // @updateURL    https://github.com/GABRlEL/wayfarer-addons/raw/refs/heads/main/userscripts/abuse-report-helper/abuse-report-helper.user.js
 // @homepageURL  https://github.com/GABRlEL/wayfarer-addons/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Remember contact details, prefill abuse-report preset and QoL for the abuse form.
 // @author       https://solo.to/Gab
-// @match        https://niantic.helpshift.com/hc/*/21-wayfarer/faq/2190-reporting-abuse-in-wayfarer*
+// @match        https://scopelyexplore.helpshift.com/hc/*/10-wayfarer/faq/1999-reporting-abuse-in-wayfarer*
 // @run-at       document-start
 // @noframes
 // @grant        GM_getValue
@@ -26,8 +26,8 @@
     // Keep the script limited to the requested page, even if a userscript manager
     // interprets the @match wildcard more broadly than expected.
     const pagePath = location.pathname.replace(/\/+$/, '');
-    if (location.hostname !== 'niantic.helpshift.com'
-        || !/^\/hc\/[^/]+\/21-wayfarer\/faq\/2190-reporting-abuse-in-wayfarer$/i.test(pagePath)) {
+    if (location.hostname !== 'scopelyexplore.helpshift.com'
+        || !/^\/hc\/[^/]+\/10-wayfarer\/faq\/1999-reporting-abuse-in-wayfarer$/i.test(pagePath)) {
         return;
     }
 
